@@ -11,6 +11,7 @@ pool = ThreadPool(processes=4)
 # Get unmatched records from FTP and S3 and compare both dataframes
 def process(source_df,sink_df):
     #print(source_df,sink_df)
+    
     #compare - If Rows and columns are same but values are different then write the different data to csv
     #print("--------------------------- compare -----------------------------------")
     try:
@@ -26,47 +27,50 @@ def process(source_df,sink_df):
     try:
         if sink_df.equals(source_df):            # Check if both dataframes are equal
             print("\nDataframe is Equal")
-        elif source_df.columns.equals(sink_df.columns):
-
-            #source_df.sort_values(by=list(source_df.columns)[:2],inplace=True)
-            #sink_df.sort_values(by=list(sink_df.columns)[:2],inplace=True)
-            print("---- Source Dataframe ----\n",source_df)
-            print("---- Sink Dataframe ----\n",sink_df)
-            # source_df['xid']=source_df.index
-            # sink_df['xid']=sink_df.index
-            # source_df=source_df.reset_index(drop=True)    # Reset index of ftp dataframe
-            # sink_df=sink_df.reset_index(drop=True)      # Reset index of s3 dataframe
-
-            source_df['count'] = source_df.groupby(list(source_df.columns)).cumcount()
-            sink_df['count'] = sink_df.groupby(list(sink_df.columns)).cumcount()
-
-            source_df['index']=source_df.index
-            source_df = source_df.reset_index(drop=True)
-            sink_df['index']=sink_df.index
-            sink_df = sink_df.reset_index(drop=True)
-
-            
-            # Get the unmatched records from FTP and S3 using outer join method
-            # Note: It will compare based on count with all the fileds on dataframes to avoid duplicates
-            un_df=source_df.merge(sink_df,how='outer',on=list(source_df.columns[:-1]),indicator=True)[lambda x: x['_merge']!='both']
-            # print(un_df)
-
-            # Rename the column value of _merge to Source or Sink insted of left_only or right_only
-            un_df["_merge"].replace({"left_only": "Source", "right_only": "Sink"}, inplace=True)
-            un_df.rename(columns = {'index_x':'Source_index','index_y':"Sink_index"}, inplace = True)
-
-            un_df = un_df.drop(['count'], axis=1)
-            print(un_df)
-            if un_df.shape[0]>0:
-                print("\nDataframe is Not Equal\n")
-                with open('unmatched_data.csv', 'w',newline='') as f: # Write unmatched records to csv file
-                    un_df.to_csv(f)
-                    f.write("\n")
-            else:
-                print("\nDataframe is Equal but records are suffled\n")
-        
         else:
-            print("\nDataframe have different columns.....")
+            # print("Dataframe is Not Equal\n")
+            if source_df.columns.equals(sink_df.columns):
+
+                #source_df.sort_values(by=list(source_df.columns)[:2],inplace=True)
+                #sink_df.sort_values(by=list(sink_df.columns)[:2],inplace=True)
+
+                print("---- Source Dataframe ----\n",source_df)
+                print("---- Sink Dataframe ----\n",sink_df)
+                # source_df['xid']=source_df.index
+                # sink_df['xid']=sink_df.index
+                # source_df=source_df.reset_index(drop=True)    # Reset index of ftp dataframe
+                # sink_df=sink_df.reset_index(drop=True)      # Reset index of s3 dataframe
+
+                source_df['count'] = source_df.groupby(list(source_df.columns)).cumcount()
+                sink_df['count'] = sink_df.groupby(list(sink_df.columns)).cumcount()
+
+                source_df['index']=source_df.index
+                source_df = source_df.reset_index(drop=True)
+                sink_df['index']=sink_df.index
+                sink_df = sink_df.reset_index(drop=True)
+
+                
+                # Get the unmatched records from FTP and S3 using outer join method
+                # Note: It will compare based on count with all the fileds on dataframes to avoid duplicates
+                un_df=source_df.merge(sink_df,how='outer',on=list(source_df.columns[:-1]),indicator=True)[lambda x: x['_merge']!='both']
+                # print(un_df)
+
+                # Rename the column value of _merge to Source or Sink insted of left_only or right_only
+                un_df["_merge"].replace({"left_only": "Source", "right_only": "Sink"}, inplace=True)
+                un_df.rename(columns = {'index_x':'Source_index','index_y':"Sink_index"}, inplace = True)
+
+                un_df = un_df.drop(['count'], axis=1)
+                print(un_df)
+                if un_df.shape[0]>0:
+                    print("Dataframe is Not Equal\n")
+                    with open('unmatched_data.csv', 'w',newline='') as f: # Write unmatched records to csv file
+                        un_df.to_csv(f)
+                        f.write("\n")
+                else:
+                    print("Dataframe is Equal but records are suffled\n")
+            
+            else:
+                print("Dataframe have different columns.....")
     except Exception as e:
         print(e)
 
@@ -188,6 +192,9 @@ if __name__ == "__main__":
 
     #new
     process(df_source,df_sink)
+
+
+    
 
     end=datetime.datetime.now().replace(microsecond=0)      # End time
     print("\nends at - - ",end)

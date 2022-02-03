@@ -21,9 +21,9 @@ def dataframe_snow(db,schm,tb):
         try:
                 df1=pd.read_sql(f'''SELECT * from {db}.{schm}.{tb}''',connection)
                 print("Snowflake table: ",tb)
-                print(f"ORACLE '{tb}' table Columns :",tuple(df1.columns))
-                print(f"ORACLE '{tb}' table Columns count :",df1.shape[1])
-                print(f"ORACLE '{tb}' table records count :",df1.shape[0],"\n")
+                print(f"Snowflake '{tb}' table Columns :",tuple(df1.columns))
+                print(f"Snowflake '{tb}' table Columns count :",df1.shape[1])
+                print(f"Snowflake '{tb}' table records count :",df1.shape[0],"\n")
                 return df1
         except Exception as e:
                 print(e)
