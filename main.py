@@ -7,8 +7,121 @@ import os
 
 
 pool = ThreadPool(processes=4)
- 
-# Get unmatched records from FTP and S3 and compare both dataframes
+
+def main():
+    source=int(input("Select source type(select number):\n1.FTP\n2.SFTP\n3.Oracle\n4.SQL Server\n\n"))
+    sink=int(input("Select sink type(select number):\n1.S3\n2.Snowflake\n\n"))
+    print(source,sink)
+
+    if source==1 and sink==1:
+        print("FTP and S3 selected")
+        ftp_file_path=input("Enter FTP file path(folder/file.csv): \n").strip()
+        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
+
+        print("\n-----------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from S3
+        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
+        async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==1 and sink==2:
+        print("FTP and Snowflake selected")
+        ftp_file_path=input("Enter FTP file path(folder/file.csv): \n").strip()
+        db=input("Enter Snowflake Database Name: \n").strip()
+        schm=input("Enter Snowflake Schema Name: \n").strip()
+        tb=input("Enter Snowflake Table Name: \n").strip()
+
+        print("\n-----------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from S3
+        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
+        async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==2 and sink==1:
+        print("SFTP and S3 selected")
+
+        sftp_file_path=input("Enter sFTP file path(folder/file.csv): \n").strip()
+        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
+
+        print("\n----------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from S3                
+        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
+        async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,)) 
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==2 and sink==2:
+        print("SFTP and Snowflake selected")
+        sftp_file_path=input("Enter sFTP file path(folder/file.csv): \n").strip()
+        db=input("Enter Snowflake Database Name: \n").strip()
+        schm=input("Enter Snowflake Schema Name: \n").strip()
+        tb=input("Enter Snowflake Table Name: \n").strip()
+
+        print("\n-----------------------------------------------------------------------------------\n")
+        
+        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
+        async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,))   
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==3 and sink==1:
+        print("Oracle and S3 selected\n")
+
+        table=input("Enter Oracle Table name: \n").strip()
+        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
+        
+        print("\n---------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from S3
+        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
+        async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==3 and sink==2:
+        print("Oracle and Snowflake selected\n")
+
+        table=input("Enter Oracle Table name: \n").strip()
+        db=input("Enter Snowflake Database Name: \n").strip()
+        schm=input("Enter Snowflake Schema Name: \n").strip()
+        tb=input("Enter Snowflake Table Name: \n").strip()
+
+        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
+        async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+
+        df_sink=async_result2.get()
+        df_source=async_result3.get()
+
+    elif source==4 and sink==1:
+        print("SQL Server and S3 selected")
+
+
+    elif source==4 and sink==2:
+        print("SQL Server and Snowflake selected")
+
+        #table=input("Enter Oracle Table name: \n").strip()
+        db=input("Enter Snowflake Database Name: \n").strip()
+        schm=input("Enter Snowflake Schema Name: \n").strip()
+        tb=input("Enter Snowflake Table Name: \n").strip()
+
+        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
+        #async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+
+        df_sink=async_result2.get()
+        #df_source=async_result3.get()
+    else:
+        print("Invalid input")
+
+    #new
+    process(df_source,df_sink)
+
+# Get unmatched records from Source and Sink & compare both dataframes
 def process(source_df,sink_df):
     #print(source_df,sink_df)
     #compare - If Rows and columns are same but values are different then write the different data to csv
@@ -17,7 +130,7 @@ def process(source_df,sink_df):
         comp=source_df.compare(sink_df,align_axis=0).rename(index={'self': 'Source', 'other': 'Sink'}, level=-1) # Compare the dataframes
         print(comp)
         if comp.shape[0]>0:             # If there are any differences in dataframes
-            with open('Compare.csv', 'w', newline='') as f:     # Write the differences to csv file
+            with open('compared.csv', 'w', newline='') as f:     # Write the differences to csv file
                 comp.to_csv(f)
                 f.write("\n")
     except Exception as e:
@@ -63,7 +176,7 @@ def process(source_df,sink_df):
                     un_df.to_csv(f)
                     f.write("\n")
             else:
-                print("\nDataframe is Equal but records are suffled\n")
+                print("\nDataframe is Equal but records are suffled....\n")
         
         else:
             print("\nDataframe have different columns.....")
@@ -72,125 +185,10 @@ def process(source_df,sink_df):
 
 
 if __name__ == "__main__":
-    
     start = datetime.datetime.now().replace(microsecond=0)  # Start time
     print("starts at --",start,"\n")
-
-    source=int(input("Select source type(select number):\n1.FTP\n2.SFTP\n3.Oracle\n4.SQL Server\n\n"))
-    sink=int(input("Select sink type(select number):\n1.S3\n2.Snowflake\n\n"))
-    print(source,sink)
-
-    if source==1 and sink==1:
-        print("FTP and S3 selected")
-        ftp_file_path=input("Enter FTP file path(folder/file.csv): \n\n").strip()
-        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n\n").strip()
-
-        print("\n-----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
-        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
-        async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==1 and sink==2:
-        print("FTP and Snowflake selected")
-        ftp_file_path=input("Enter FTP file path(folder/file.csv): \n\n").strip()
-        db=input("Enter Snowflake Database Name: \n").strip()
-        schm=input("Enter Snowflake Schema Name: \n").strip()
-        tb=input("Enter Snowflake Table Name: \n\n").strip()
-
-        print("\n-----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
-        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==2 and sink==1:
-        print("SFTP and S3 selected")
-
-        sftp_file_path=input("Enter sFTP file path(folder/file.csv): \n\n").strip()
-        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n\n").strip()
-
-        print("\n----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3                
-        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
-        async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,)) 
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==2 and sink==2:
-        print("SFTP and Snowflake selected")
-        sftp_file_path=input("Enter sFTP file path(folder/file.csv): \n\n").strip()
-        db=input("Enter Snowflake Database Name: \n").strip()
-        schm=input("Enter Snowflake Schema Name: \n").strip()
-        tb=input("Enter Snowflake Table Name: \n\n").strip()
-
-        print("\n-----------------------------------------------------------------------------------\n")
-        
-        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,))   
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==3 and sink==1:
-        print("Oracle and S3 selected\n")
-
-        table=input("Enter Oracle Table name: \n").strip()
-        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
-        
-        print("\n---------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
-        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
-        async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==3 and sink==2:
-        print("Oracle and Snowflake selected\n")
-
-        table=input("Enter Oracle Table name: \n").strip()
-        db=input("Enter Snowflake Database Name: \n").strip()
-        schm=input("Enter Snowflake Schema Name: \n").strip()
-        tb=input("Enter Snowflake Table Name: \n\n").strip()
-
-        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
-
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
-
-    elif source==4 and sink==1:
-        print("SQL Server and S3 selected")
-
-
-
-    elif source==4 and sink==2:
-        print("SQL Server and Snowflake selected")
-
-        #table=input("Enter Oracle Table name: \n").strip()
-        db=input("Enter Snowflake Database Name: \n").strip()
-        schm=input("Enter Snowflake Schema Name: \n").strip()
-        tb=input("Enter Snowflake Table Name: \n\n").strip()
-
-        async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        #async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
-
-        df_sink=async_result2.get()
-        #df_source=async_result3.get()
-    else:
-        print("Invalid input")
-
-    #new
-    process(df_source,df_sink)
-
+    main()                                                  # main function
     end=datetime.datetime.now().replace(microsecond=0)      # End time
     print("\nends at - - ",end)
-    print("Total Time took - - :",end-start)            # Total time took
-
+    print("Total Time took - - :",end-start)                # Total time took
     os.system("pause")
