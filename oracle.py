@@ -7,10 +7,6 @@ import pandas as pd
 dsn_tns = cx_Oracle.makedsn(config.o_hostname, config.o_port, config.o_sid)
 # Create connection with oracle database
 connection = cx_Oracle.connect(config.o_username, config.o_password, dsn_tns)
-# cur=connection.cursor()
-# cnt=f'''SELECT count(*) FROM {table}'''
-# cur.execute(cnt)
-#print(cur.fetchall()[0][0])
 
 def dataframe_oracle(table):
     #print("\n --------------------------- ORACLE SOURCE -----------------------------\n")
@@ -25,6 +21,7 @@ def dataframe_oracle(table):
     except Exception as e:
         print(e)
 
-
+# df=dataframe_oracle("dbo.tbl_test")
+# print(df)
 
 

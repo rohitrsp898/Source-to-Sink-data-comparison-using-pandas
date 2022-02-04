@@ -1,45 +1,47 @@
 import datetime
 import ftp,sftp,oracle,snow,sql_server        
 import s3   
-import pandas as pd
 from multiprocessing.pool import ThreadPool
 import os
 
-
+#start 4 worker processes
 pool = ThreadPool(processes=4)
 
 def main():
+    # Select the Source and Sink 
     source=int(input("Select source type(select number):\n1.FTP\n2.SFTP\n3.Oracle\n4.SQL Server\n\n"))
     sink=int(input("Select sink type(select number):\n1.S3\n2.Snowflake\n\n"))
-    print(source,sink)
+    #print(source,sink)
 
     if source==1 and sink==1:
         print("FTP and S3 selected")
+
         ftp_file_path=input("Enter FTP file path(folder/file.csv): \n").strip()
         s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
 
         print("\n-----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
+        # Thread to Get record, column count and dataframe from S3 and FTP
         async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
         async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
 
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
+        df_sink=async_result2.get()         # Get the dataframe from S3
+        df_source=async_result3.get()       # Get the dataframe from FTP
 
     elif source==1 and sink==2:
         print("FTP and Snowflake selected")
+
         ftp_file_path=input("Enter FTP file path(folder/file.csv): \n").strip()
         db=input("Enter Snowflake Database Name: \n").strip()
         schm=input("Enter Snowflake Schema Name: \n").strip()
         tb=input("Enter Snowflake Table Name: \n").strip()
 
         print("\n-----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
+        # Thread to Get record, column count and dataframe from Snowflake and FTP
         async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
         async_result3 = pool.apply_async(ftp.dataframe_ftp,(ftp_file_path,))   
 
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
+        df_sink=async_result2.get()         # Get the dataframe from Snowflake
+        df_source=async_result3.get()       # Get the dataframe from FTP
 
     elif source==2 and sink==1:
         print("SFTP and S3 selected")
@@ -48,41 +50,42 @@ def main():
         s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
 
         print("\n----------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3                
+        # Thread to Get record, column count and dataframe from S3 and SFTP               
         async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
         async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,)) 
 
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
+        df_sink=async_result2.get()         # Get the dataframe from S3
+        df_source=async_result3.get()       # Get the dataframe from SFTP
 
     elif source==2 and sink==2:
         print("SFTP and Snowflake selected")
+
         sftp_file_path=input("Enter sFTP file path(folder/file.csv): \n").strip()
         db=input("Enter Snowflake Database Name: \n").strip()
         schm=input("Enter Snowflake Schema Name: \n").strip()
         tb=input("Enter Snowflake Table Name: \n").strip()
 
         print("\n-----------------------------------------------------------------------------------\n")
-        
+        # Thread to Get record, column count and dataframe from Snowflake and SFTP
         async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
         async_result3 = pool.apply_async(sftp.dataframe_sftp,(sftp_file_path,))   
 
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
+        df_sink=async_result2.get()         # Get the dataframe from Snowflake
+        df_source=async_result3.get()       # Get the dataframe from SFTP
 
     elif source==3 and sink==1:
         print("Oracle and S3 selected\n")
 
-        table=input("Enter Oracle Table name: \n").strip()
+        table=input("Enter Oracle Table name: \n").strip()         
         s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
         
         print("\n---------------------------------------------------------------------------------\n")
-        # Thread to Get record, column count and dataframe from S3
+        # Thread to Get record, column count and dataframe from S3 and Oracle
         async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
         async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
 
-        df_sink=async_result2.get()
-        df_source=async_result3.get()
+        df_sink=async_result2.get()         # Get the dataframe from S3
+        df_source=async_result3.get()       # Get the dataframe from Oracle
 
     elif source==3 and sink==2:
         print("Oracle and Snowflake selected\n")
@@ -92,6 +95,8 @@ def main():
         schm=input("Enter Snowflake Schema Name: \n").strip()
         tb=input("Enter Snowflake Table Name: \n").strip()
 
+        print("\n---------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from Snowflake and Oracle
         async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
         async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
 
@@ -101,25 +106,37 @@ def main():
     elif source==4 and sink==1:
         print("SQL Server and S3 selected")
 
+        table=input("Enter SQL Server Table name: \n").strip()         
+        s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
+
+        print("\n---------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from S3 and SQL Server
+        #async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
+        #async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+
+        #df_sink=async_result2.get()         # Get the dataframe from S3
+        #df_source=async_result3.get()       # Get the dataframe from Oracle
 
     elif source==4 and sink==2:
         print("SQL Server and Snowflake selected")
 
-        #table=input("Enter Oracle Table name: \n").strip()
+        table=input("Enter SQL Server Table name: \n").strip()     
         db=input("Enter Snowflake Database Name: \n").strip()
         schm=input("Enter Snowflake Schema Name: \n").strip()
         tb=input("Enter Snowflake Table Name: \n").strip()
 
+        print("\n---------------------------------------------------------------------------------\n")
+        # Thread to Get record, column count and dataframe from Snowflake and SQL Server
         async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        #async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+        #async_result3 = pool.apply_async(sql_server.dataframe_sql,(table,))
 
         df_sink=async_result2.get()
         #df_source=async_result3.get()
     else:
         print("Invalid input")
-
-    #new
+    # End of Threads and Now Source and Sink dataframes are ready to compare
     process(df_source,df_sink)
+
 
 # Get unmatched records from Source and Sink & compare both dataframes
 def process(source_df,sink_df):
@@ -130,7 +147,7 @@ def process(source_df,sink_df):
         comp=source_df.compare(sink_df,align_axis=0).rename(index={'self': 'Source', 'other': 'Sink'}, level=-1) # Compare the dataframes
         print(comp)
         if comp.shape[0]>0:             # If there are any differences in dataframes
-            with open('compared.csv', 'w', newline='') as f:     # Write the differences to csv file
+            with open('compared_data.csv', 'w', newline='') as f:     # Write the differences to csv file
                 comp.to_csv(f)
                 f.write("\n")
     except Exception as e:
@@ -158,16 +175,15 @@ def process(source_df,sink_df):
             sink_df['index']=sink_df.index
             sink_df = sink_df.reset_index(drop=True)
 
-            
-            # Get the unmatched records from FTP and S3 using outer join method
+            # Get the unmatched records from Source and Sink using outer join method
             # Note: It will compare based on count with all the fileds on dataframes to avoid duplicates
             un_df=source_df.merge(sink_df,how='outer',on=list(source_df.columns[:-1]),indicator=True)[lambda x: x['_merge']!='both']
             # print(un_df)
-
             # Rename the column value of _merge to Source or Sink insted of left_only or right_only
             un_df["_merge"].replace({"left_only": "Source", "right_only": "Sink"}, inplace=True)
+            # Rename the column index_x to Source_index and index_y to Sink_index
             un_df.rename(columns = {'index_x':'Source_index','index_y':"Sink_index"}, inplace = True)
-
+            # drop the count column
             un_df = un_df.drop(['count'], axis=1)
             print(un_df)
             if un_df.shape[0]>0:
@@ -177,7 +193,6 @@ def process(source_df,sink_df):
                     f.write("\n")
             else:
                 print("\nDataframe is Equal but records are suffled....\n")
-        
         else:
             print("\nDataframe have different columns.....")
     except Exception as e:
