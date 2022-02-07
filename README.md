@@ -1,6 +1,6 @@
 # Source-to-Sink-data-validation-using-pandas
 
-In this we are comaring source and sink data. If there is any mismatch of data then we will store that data into csv.
+In this, we are comparing source and sink data. If there are any mismatches of data then we will store those data as CSV files.
 
 - Source - FTP, sFTP, Oracle and SQL Server.
 - Sink - AWS S3 and Snowflake.
