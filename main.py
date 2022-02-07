@@ -1,5 +1,5 @@
 import datetime
-import ftp,sftp,oracle,snow,sql_server        
+import ftp,sftp,snow,sql_server,oracle    
 import s3   
 from multiprocessing.pool import ThreadPool
 import os
@@ -106,21 +106,24 @@ def main():
     elif source==4 and sink==1:
         print("SQL Server and S3 selected")
 
-        table=input("Enter SQL Server Table name: \n").strip()         
+        sdb=input("Enter SQL Server Database name: \n").strip() 
+        stb=input("Enter SQL Server Table name: \n").strip()         
         s3_uri=input("Enter file S3 uri(s3://bucket/file.csv): \n").strip()
 
         print("\n---------------------------------------------------------------------------------\n")
         # Thread to Get record, column count and dataframe from S3 and SQL Server
-        #async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
-        #async_result3 = pool.apply_async(oracle.dataframe_oracle,(table,))
+        async_result2 = pool.apply_async(s3.dataframe_s3,(s3_uri,)) 
+        async_result3 = pool.apply_async(oracle.dataframe_oracle,(sdb,stb,))
 
-        #df_sink=async_result2.get()         # Get the dataframe from S3
-        #df_source=async_result3.get()       # Get the dataframe from Oracle
+        df_sink=async_result2.get()         # Get the dataframe from S3
+        df_source=async_result3.get()       # Get the dataframe from SQL SERVER
 
     elif source==4 and sink==2:
         print("SQL Server and Snowflake selected")
 
-        table=input("Enter SQL Server Table name: \n").strip()     
+        sdb=input("Enter SQL Server Database name: \n").strip() 
+        stb=input("Enter SQL Server Table name: \n").strip() 
+
         db=input("Enter Snowflake Database Name: \n").strip()
         schm=input("Enter Snowflake Schema Name: \n").strip()
         tb=input("Enter Snowflake Table Name: \n").strip()
@@ -128,10 +131,11 @@ def main():
         print("\n---------------------------------------------------------------------------------\n")
         # Thread to Get record, column count and dataframe from Snowflake and SQL Server
         async_result2 = pool.apply_async(snow.dataframe_snow,(db,schm,tb,)) 
-        #async_result3 = pool.apply_async(sql_server.dataframe_sql,(table,))
+        async_result3 = pool.apply_async(sql_server.dataframe_sql,(sdb,stb,))
 
         df_sink=async_result2.get()
-        #df_source=async_result3.get()
+        df_source=async_result3.get()
+        
     else:
         print("Invalid input")
     # End of Threads and Now Source and Sink dataframes are ready to compare
@@ -191,6 +195,7 @@ def process(source_df,sink_df):
                 with open('unmatched_data.csv', 'w',newline='') as f: # Write unmatched records to csv file
                     un_df.to_csv(f)
                     f.write("\n")
+
             else:
                 print("\nDataframe is Equal but records are suffled....\n")
         else:
@@ -198,7 +203,7 @@ def process(source_df,sink_df):
     except Exception as e:
         print(e)
 
-
+# Start of main function
 if __name__ == "__main__":
     start = datetime.datetime.now().replace(microsecond=0)  # Start time
     print("starts at --",start,"\n")
@@ -207,3 +212,5 @@ if __name__ == "__main__":
     print("\nends at - - ",end)
     print("Total Time took - - :",end-start)                # Total time took
     os.system("pause")
+
+# End of Program

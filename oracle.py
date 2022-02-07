@@ -10,10 +10,11 @@ connection = cx_Oracle.connect(config.o_username, config.o_password, dsn_tns)
 
 def dataframe_oracle(table):
     #print("\n --------------------------- ORACLE SOURCE -----------------------------\n")
-    print("ORACLE table: ",table)
+    #print("ORACLE table: ",table)
     #print("\n")
     try:
         df1=pd.read_sql(f'''SELECT * FROM {table}''',connection)
+        print("ORACLE table: ",table)
         print(f"ORACLE '{table}' table Columns :",tuple(df1.columns))
         print(f"ORACLE '{table}' table Columns count :",df1.shape[1])
         print(f"ORACLE '{table}' table records count :",df1.shape[0],"\n")
@@ -21,7 +22,7 @@ def dataframe_oracle(table):
     except Exception as e:
         print(e)
 
-# df=dataframe_oracle("dbo.tbl_test")
+# df=dataframe_oracle("dbo.tb")
 # print(df)
 
 

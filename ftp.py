@@ -17,5 +17,5 @@ def dataframe_ftp(ftp_file_path):
     except Exception as e:
         print(e)
 
-# df=dataframe_ftp("facts/facts/INVENTORIES.csv")
+# df=dataframe_ftp("/test.csv")
 # print(df)

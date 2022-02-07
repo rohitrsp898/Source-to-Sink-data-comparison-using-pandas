@@ -40,8 +40,7 @@ snow_database=config["snow"]["database"]
 snow_schema=config["snow"]["schema"]
 
 #sql server
-ss_host=config["sqlserver"]["hostname"]
-ss_port=config["sqlserver"]["port"]
+ss_server=config["sqlserver"]["server"]
 ss_username=config["sqlserver"]["username"]
 ss_password=config["sqlserver"]["password"]
 ss_database=config["sqlserver"]["database"]

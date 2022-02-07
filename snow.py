@@ -1,8 +1,8 @@
 
 import config
 import pandas as pd
-#import snowflake.connector
 import pypyodbc
+#import snowflake.connector
 
 #DS_SF is dsn 64 bit ODBC driver for Snowflake
 connection = pypyodbc.connect(f'DSN=DS_SF;UID={config.snow_username};PWD={config.snow_password};')
@@ -18,9 +18,6 @@ def dataframe_snow(db,schm,tb):
     except Exception as e:
             print(e)
 
-#.IDEA_QA_TEST_DB.A_IDEA_T_STG_FIN_CARD_TEMP_34
-#print(dataframe_snow("IDEA_QA_TEST_DB","IDEA_QA_TEST_DB","A_IDEA_T_STG_FIN_CARD_TEMP_34"))
-        
 
 # Checking connection to Snowflake
 
